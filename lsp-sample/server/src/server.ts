@@ -14,12 +14,21 @@ import {
 	CompletionItemKind,
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
-	InitializeResult
+	InitializeResult,
+	SymbolKind,
+	Range,
+	TypeHierarchyPrepareRequest,
+	TypeHierarchySubtypesRequest,
+	TypeHierarchySupertypesRequest,
+	TypeHierarchyItem,
+	Position
 } from 'vscode-languageserver/node';
 
 import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
+import * as fse from "fs-extra";
+import {URI, Utils} from "vscode-uri";
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -206,6 +215,66 @@ connection.onCompletion(
 		];
 	}
 );
+
+connection.onRequest(TypeHierarchyPrepareRequest.type, async (param) => {
+	const uri = URI.parse(param.textDocument.uri);
+	const fileContent = (await fse.readFile(uri.fsPath)).toString();
+	const textDocument: TextDocument = TextDocument.create(uri.toString(), "plaintext", 0, fileContent);
+	const targetRange = Range.create(Position.create(param.position.line, 0), Position.create(param.position.line, 999));
+	const content = textDocument.getText(targetRange)
+	const results: TypeHierarchyItem[] = [
+		{
+			name: content,
+			kind: SymbolKind.Class,
+			uri: param.textDocument.uri,
+			range: targetRange,
+			selectionRange: targetRange,
+		}
+	];
+	return results;
+});
+
+connection.onRequest(TypeHierarchySubtypesRequest.type, async (param) => {
+	const uri = URI.parse(param.item.uri);
+	const fileContent = (await fse.readFile(uri.fsPath)).toString();
+	const textDocument: TextDocument = TextDocument.create(uri.toString(), "plaintext", 0, fileContent);
+	if (textDocument.lineCount === param.item.range.start.line + 1) {
+		return [];
+	}
+	const targetRange = Range.create(Position.create(param.item.range.start.line + 1, 0), Position.create(param.item.range.start.line + 1, 999));
+	const content = textDocument.getText(targetRange)
+	const results: TypeHierarchyItem[] = [
+		{
+			name: content,
+			kind: SymbolKind.Class,
+			uri: param.item.uri,
+			range: targetRange,
+			selectionRange: targetRange,
+		}
+	];
+	return results;
+});
+
+connection.onRequest(TypeHierarchySupertypesRequest.type, async (param) => {
+	const uri = URI.parse(param.item.uri);
+	const fileContent = (await fse.readFile(uri.fsPath)).toString();
+	const textDocument: TextDocument = TextDocument.create(uri.toString(), "plaintext", 0, fileContent);
+	if (0 === param.item.range.start.line) {
+		return [];
+	}
+	const targetRange = Range.create(Position.create(param.item.range.start.line - 1, 0), Position.create(param.item.range.start.line - 1, 999));
+	const content = textDocument.getText(targetRange)
+	const results: TypeHierarchyItem[] = [
+		{
+			name: content,
+			kind: SymbolKind.Class,
+			uri: param.item.uri,
+			range: targetRange,
+			selectionRange: targetRange,
+		}
+	];
+	return results;
+});
 
 // This handler resolves additional information for the item selected in
 // the completion list.

@@ -10,13 +10,15 @@
 		"url": "https://github.com/Microsoft/vscode-extension-samples"
 	},
 	"engines": {
-		"vscode": "^1.52.0"
+		"vscode": "^1.53.0"
 	},
 	"dependencies": {
-		"vscode-languageclient": "^7.0.0"
+		"vscode-languageclient": "file:languageclient-libs/vscode-languageclient-7.1.0-typeh.5-processObject.tgz",
+		"vscode-languageserver-protocol": "file:languageclient-libs/vscode-languageserver-protocol-3.17.0-typeh.0.tgz",
+		"vscode-languageserver-types": "file:languageclient-libs/vscode-languageserver-types-3.17.0-typeh.0.tgz"
 	},
 	"devDependencies": {
-		"@types/vscode": "^1.52.0",
+		"@types/vscode": "^1.53.0",
 		"vscode-test": "^1.3.0"
 	}
 }

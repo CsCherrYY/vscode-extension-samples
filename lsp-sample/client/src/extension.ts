@@ -4,13 +4,18 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as path from 'path';
-import { workspace, ExtensionContext } from 'vscode';
+import { workspace, ExtensionContext, commands, window } from 'vscode';
 
 import {
 	LanguageClient,
 	LanguageClientOptions,
 	ServerOptions,
-	TransportKind
+	TextDocumentIdentifier,
+	TransportKind,
+	TypeHierarchyPrepareParams,
+	TypeHierarchyPrepareRequest,
+	TypeHierarchySubtypesRequest,
+	TypeHierarchySupertypesRequest
 } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
@@ -55,6 +60,18 @@ export function activate(context: ExtensionContext) {
 
 	// Start the client. This will also launch the server
 	client.start();
+
+	commands.registerCommand("lsp.typeHierarchyPrepare", async () => {
+		const params: TypeHierarchyPrepareParams = {
+			textDocument: TextDocumentIdentifier.create(window.activeTextEditor.document.uri.toString()),
+			position: window.activeTextEditor.selection.active,
+		}
+		const result = await client.sendRequest(TypeHierarchyPrepareRequest.type, params);
+		const supertypes = await client.sendRequest(TypeHierarchySupertypesRequest.type, {item: result[0]});
+		const subtypes = await client.sendRequest(TypeHierarchySubtypesRequest.type, {item: result[0]});
+		return 0;
+	});
+
 }
 
 export function deactivate(): Thenable<void> | undefined {
